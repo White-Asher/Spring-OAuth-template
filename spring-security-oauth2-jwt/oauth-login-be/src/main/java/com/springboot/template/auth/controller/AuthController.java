@@ -1,6 +1,6 @@
 package com.springboot.template.auth.controller;
 
-import com.springboot.template.auth.entity.AuthReqModel;
+import com.springboot.template.auth.dto.AuthReqModel;
 import com.springboot.template.common.ApiResponse;
 import com.springboot.template.config.properties.AppProperties;
 import com.springboot.template.oauth.entity.RoleType;

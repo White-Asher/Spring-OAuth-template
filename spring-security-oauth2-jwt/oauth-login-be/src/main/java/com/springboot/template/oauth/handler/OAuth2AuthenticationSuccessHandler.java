@@ -35,14 +35,14 @@ import static com.springboot.template.oauth.repository.OAuth2AuthorizationReques
 import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterNames.REFRESH_TOKEN;
 
 /**
- * OAuth2로 로그인을 성공적으로 마친 사용자의 정보를 처리하는 핸들러 클래스입니다.
+ * OAuth2로 로그인을 성공적으로 마친 사용자의 정보를 처리하는 핸들러 클래스입니다. <br>
  * 우선 해당 클래스는 SimpleUrlAuthenticationSuccessHandler 클래스를 상속하고 있으며,
- * AuthTokenProvider, AppProperties, UserRefreshTokenRepository, OAuth2AuthorizationRequestBasedOnCookieRepository 등의 클래스의 인스턴스를 생성자를 통해 주입받습니다.
- * `onAuthenticationSucces`s 메소드는 로그인에 성공한 경우에 호출되는 메소드이며, `determineTargetUrl` 메소드를 통해 로그인 이후 리디렉션할 URL을 결정합니다.
- * 만약, 리디렉션할 URL이 유효하지 않은 경우 예외가 발생합니다.
- * `determineTargetUrl` 메소드에서는 쿠키를 통해 받아온 리디렉션 URI와 `getDefaultTargetUrl` 메소드를 통해 받아온 기본 URL 중 하나를 선택합니다.
- * 이후 OAuth2 토큰, 사용자 정보, 권한 정보를 이용하여 액세스 토큰 및 리프레시 토큰을 생성하고, DB에 저장합니다.
- * 이후 새로 생성된 리프레시 토큰을 쿠키에 저장하고, 액세스 토큰을 URL 파라미터에 추가하여 리디렉션할 URL을 만들어 반환합니다.
+ * AuthTokenProvider, AppProperties, UserRefreshTokenRepository, OAuth2AuthorizationRequestBasedOnCookieRepository 등의 클래스의 인스턴스를 생성자를 통해 주입받습니다. <br>
+ * `onAuthenticationSucces`s 메소드는 로그인에 성공한 경우에 호출되는 메소드이며, `determineTargetUrl` 메소드를 통해 로그인 이후 리디렉션할 URL을 결정합니다. <br>
+ * 만약, 리디렉션할 URL이 유효하지 않은 경우 예외가 발생합니다. <br>
+ * `determineTargetUrl` 메소드에서는 쿠키를 통해 받아온 리디렉션 URI와 `getDefaultTargetUrl` 메소드를 통해 받아온 기본 URL 중 하나를 선택합니다. <br>
+ * 이후 OAuth2 토큰, 사용자 정보, 권한 정보를 이용하여 액세스 토큰 및 리프레시 토큰을 생성하고, DB에 저장합니다. <br>
+ * 이후 새로 생성된 리프레시 토큰을 쿠키에 저장하고, 액세스 토큰을 URL 파라미터에 추가하여 리디렉션할 URL을 만들어 반환합니다. <br>
  * 마지막으로, `clearAuthenticationAttributes` 메소드는 인증에 사용된 쿠키를 제거합니다.
  */
 

@@ -1,4 +1,4 @@
-package com.springboot.template.auth.entity;
+package com.springboot.template.auth.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

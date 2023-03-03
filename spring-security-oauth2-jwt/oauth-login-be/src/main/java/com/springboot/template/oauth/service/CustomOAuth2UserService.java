@@ -19,6 +19,16 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+/**
+ * 위 코드는 Spring Security와 OAuth2.0을 이용한 소셜 로그인에 사용되는 CustomOAuth2UserService 클래스입니다. <br>
+ * `DefaultOAuth2UserService`를 상속받아서 OAuth2User 인터페이스를 구현하는 `loadUser()` 메소드를 오버라이드합니다. <br>
+ * `loadUser()` 메소드에서는 `super.loadUser(userRequest)`를 호출하여 OAuth2User 객체를 가져오고, `process()` 메소드를 호출하여 해당 객체를 처리합니다. <br>
+ * `process()` 메소드에서는 OAuth2UserRequest 객체와 OAuth2User 객체를 인자로 받아서, 해당 소셜 미디어 타입에 대한 정보를 바탕으로 OAuth2UserInfo 객체를 생성하고, 해당 사용자 정보가 데이터베이스에 있는지 확인한 후, 없으면 새로운 User 객체를 생성하고, 있으면 해당 User 객체를 업데이트합니다. <br>
+ * `createUser()` 메소드에서는 OAuth2UserInfo 객체와 소셜 미디어 타입을 인자로 받아서 새로운 User 객체를 생성하고, 해당 객체를 저장합니다. <br>
+ * `updateUser()` 메소드에서는 User 객체와 OAuth2UserInfo 객체를 인자로 받아서 User 객체를 업데이트합니다. <br>
+ * 마지막으로 **`UserPrincipal.create()`**를 호출하여 UserPrincipal 객체를 생성하고, 이를 반환합니다. <br>
+ */
+
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
