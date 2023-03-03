@@ -1,16 +1,16 @@
 package com.springboot.template.config.security;
 
-import com.springboot.template.config.properties.AppProperties;
+import com.springboot.template.config.properties.AppAuthProperties;
 import com.springboot.template.config.properties.CorsProperties;
-import com.springboot.template.oauth.entity.RoleType;
+import com.springboot.template.auth.entity.RoleType;
 import com.springboot.template.config.properties.RestAuthenticationEntryPoint;
-import com.springboot.template.oauth.filter.TokenAuthenticationFilter;
-import com.springboot.template.oauth.handler.OAuth2AuthenticationFailureHandler;
-import com.springboot.template.oauth.handler.OAuth2AuthenticationSuccessHandler;
-import com.springboot.template.oauth.handler.TokenAccessDeniedHandler;
-import com.springboot.template.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
-import com.springboot.template.oauth.service.CustomOAuth2UserService;
-import com.springboot.template.oauth.token.AuthTokenProvider;
+import com.springboot.template.auth.filter.TokenAuthenticationFilter;
+import com.springboot.template.auth.handler.OAuth2AuthenticationFailureHandler;
+import com.springboot.template.auth.handler.OAuth2AuthenticationSuccessHandler;
+import com.springboot.template.auth.handler.TokenAccessDeniedHandler;
+import com.springboot.template.auth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
+import com.springboot.template.auth.service.CustomOAuth2UserService;
+import com.springboot.template.auth.token.AuthTokenProvider;
 import com.springboot.template.user.repository.UserRefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -40,7 +40,7 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final CorsProperties corsProperties;
-    private final AppProperties appProperties;
+    private final AppAuthProperties appAuthProperties;
     private final AuthTokenProvider tokenProvider;
     private final UserDetailsService userDetailsService;
     private final CustomOAuth2UserService oAuth2UserService;
@@ -62,11 +62,13 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new RestAuthenticationEntryPoint())
                 .accessDeniedHandler(tokenAccessDeniedHandler)
             .and()
+                    // 권한 인증 관련
                 .authorizeRequests()
                 .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
                 .antMatchers("/api/**").hasAnyAuthority(RoleType.USER.getCode())
                 .antMatchers("/api/**/admin/**").hasAnyAuthority(RoleType.ADMIN.getCode())
                 .anyRequest().authenticated()
+                    // 소셜 로그인
             .and()
                 .oauth2Login()
                 .authorizationEndpoint()
@@ -149,7 +151,7 @@ public class SecurityConfig {
     public OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
         return new OAuth2AuthenticationSuccessHandler(
                 tokenProvider,
-                appProperties,
+                appAuthProperties,
                 userRefreshTokenRepository,
                 oAuth2AuthorizationRequestBasedOnCookieRepository()
         );

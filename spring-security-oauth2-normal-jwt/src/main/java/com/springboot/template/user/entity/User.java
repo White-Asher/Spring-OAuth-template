@@ -1,8 +1,8 @@
 package com.springboot.template.user.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.springboot.template.oauth.entity.ProviderType;
-import com.springboot.template.oauth.entity.RoleType;
+import com.springboot.template.auth.entity.ProviderType;
+import com.springboot.template.auth.entity.RoleType;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

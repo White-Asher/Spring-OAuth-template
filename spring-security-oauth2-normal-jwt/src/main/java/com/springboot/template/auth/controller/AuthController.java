@@ -1,12 +1,12 @@
 package com.springboot.template.auth.controller;
 
-import com.springboot.template.auth.entity.AuthReqModel;
+import com.springboot.template.auth.dto.AuthRequestDto;
 import com.springboot.template.common.ApiResponse;
-import com.springboot.template.config.properties.AppProperties;
-import com.springboot.template.oauth.entity.RoleType;
-import com.springboot.template.oauth.entity.UserPrincipal;
-import com.springboot.template.oauth.token.AuthToken;
-import com.springboot.template.oauth.token.AuthTokenProvider;
+import com.springboot.template.config.properties.AppAuthProperties;
+import com.springboot.template.auth.entity.RoleType;
+import com.springboot.template.auth.entity.UserPrincipal;
+import com.springboot.template.auth.token.AuthToken;
+import com.springboot.template.auth.token.AuthTokenProvider;
 import com.springboot.template.user.entity.UserRefreshToken;
 import com.springboot.template.user.repository.UserRefreshTokenRepository;
 import com.springboot.template.utils.CookieUtil;
@@ -29,7 +29,7 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class AuthController {
 
-    private final AppProperties appProperties;
+    private final AppAuthProperties appAuthProperties;
     private final AuthTokenProvider tokenProvider;
     private final AuthenticationManager authenticationManager;
     private final UserRefreshTokenRepository userRefreshTokenRepository;
@@ -41,28 +41,28 @@ public class AuthController {
     public ApiResponse<?> login(
             HttpServletRequest request,
             HttpServletResponse response,
-            @RequestBody AuthReqModel authReqModel
+            @RequestBody AuthRequestDto authRequestDto
     ) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        authReqModel.getId(),
-                        authReqModel.getPassword()
+                        authRequestDto.getId(),
+                        authRequestDto.getPassword()
                 )
         );
 
-        String userId = authReqModel.getId();
+        String userId = authRequestDto.getId();
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Date now = new Date();
         AuthToken accessToken = tokenProvider.createAuthToken(
                 userId,
                 ((UserPrincipal) authentication.getPrincipal()).getRoleType().getCode(),
-                new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
+                new Date(now.getTime() + appAuthProperties.getAuth().getTokenExpiry())
         );
 
-        long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
+        long refreshTokenExpiry = appAuthProperties.getAuth().getRefreshTokenExpiry();
         AuthToken refreshToken = tokenProvider.createAuthToken(
-                appProperties.getAuth().getTokenSecret(),
+                appAuthProperties.getAuth().getTokenSecret(),
                 new Date(now.getTime() + refreshTokenExpiry)
         );
 
@@ -122,7 +122,7 @@ public class AuthController {
         AuthToken newAccessToken = tokenProvider.createAuthToken(
                 userId,
                 roleType.getCode(),
-                new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
+                new Date(now.getTime() + appAuthProperties.getAuth().getTokenExpiry())
         );
 
         long validTime = authRefreshToken.getTokenClaims().getExpiration().getTime() - now.getTime();
@@ -130,10 +130,10 @@ public class AuthController {
         // refresh 토큰 기간이 3일 이하로 남은 경우, refresh 토큰 갱신
         if (validTime <= THREE_DAYS_MSEC) {
             // refresh 토큰 설정
-            long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
+            long refreshTokenExpiry = appAuthProperties.getAuth().getRefreshTokenExpiry();
 
             authRefreshToken = tokenProvider.createAuthToken(
-                    appProperties.getAuth().getTokenSecret(),
+                    appAuthProperties.getAuth().getTokenSecret(),
                     new Date(now.getTime() + refreshTokenExpiry)
             );
 
