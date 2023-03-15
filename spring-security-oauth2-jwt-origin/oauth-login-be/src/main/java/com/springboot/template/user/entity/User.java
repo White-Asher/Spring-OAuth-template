@@ -3,7 +3,10 @@ package com.springboot.template.user.entity;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.springboot.template.oauth.entity.ProviderType;
 import com.springboot.template.oauth.entity.RoleType;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -12,7 +15,6 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity

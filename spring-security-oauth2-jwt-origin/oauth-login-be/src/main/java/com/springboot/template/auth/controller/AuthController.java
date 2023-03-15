@@ -13,7 +13,6 @@ import com.springboot.template.utils.CookieUtil;
 import com.springboot.template.utils.HeaderUtil;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -28,7 +27,6 @@ import java.util.Date;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-@Slf4j
 public class AuthController {
 
     private final AppProperties appProperties;
@@ -45,15 +43,12 @@ public class AuthController {
             HttpServletResponse response,
             @RequestBody AuthReqModel authReqModel
     ) {
-        log.info("일반로그인 post 요청");
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         authReqModel.getId(),
                         authReqModel.getPassword()
                 )
         );
-
-        log.info("authentication : {} ", authentication);
 
         String userId = authReqModel.getId();
         SecurityContextHolder.getContext().setAuthentication(authentication);
@@ -64,15 +59,12 @@ public class AuthController {
                 ((UserPrincipal) authentication.getPrincipal()).getRoleType().getCode(),
                 new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
         );
-        log.info("ac token : {} ", accessToken);
 
         long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
         AuthToken refreshToken = tokenProvider.createAuthToken(
                 appProperties.getAuth().getTokenSecret(),
                 new Date(now.getTime() + refreshTokenExpiry)
         );
-
-        log.info("rf token : {} ", refreshToken);
 
         // userId refresh token 으로 DB 확인
         UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUserId(userId);

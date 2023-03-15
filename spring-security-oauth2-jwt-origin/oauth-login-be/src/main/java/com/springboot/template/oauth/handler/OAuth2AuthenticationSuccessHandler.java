@@ -13,7 +13,6 @@ import com.springboot.template.user.repository.UserRefreshTokenRepository;
 
 import com.springboot.template.utils.CookieUtil;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -49,7 +48,6 @@ import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterN
 
 @Component
 @RequiredArgsConstructor
-@Slf4j
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final AuthTokenProvider tokenProvider;
@@ -117,9 +115,6 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
         CookieUtil.addCookie(response, REFRESH_TOKEN, refreshToken.getToken(), cookieMaxAge);
-        log.info("Oauth return access token : {}", accessToken.getToken());
-
-//        return UriComponentsBuilder.fromHttpRequest("Authrorization", )
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", accessToken.getToken())
