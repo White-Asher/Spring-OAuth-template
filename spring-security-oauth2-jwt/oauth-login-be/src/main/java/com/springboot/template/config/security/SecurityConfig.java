@@ -2,15 +2,14 @@ package com.springboot.template.config.security;
 
 import com.springboot.template.config.properties.AppProperties;
 import com.springboot.template.config.properties.CorsProperties;
-import com.springboot.template.oauth.entity.RoleType;
-import com.springboot.template.oauth.exception.RestAuthenticationEntryPoint;
-import com.springboot.template.oauth.filter.TokenAuthenticationFilter;
-import com.springboot.template.oauth.handler.OAuth2AuthenticationFailureHandler;
-import com.springboot.template.oauth.handler.OAuth2AuthenticationSuccessHandler;
-import com.springboot.template.oauth.handler.TokenAccessDeniedHandler;
-import com.springboot.template.oauth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
-import com.springboot.template.oauth.service.CustomOAuth2UserService;
-import com.springboot.template.oauth.token.AuthTokenProvider;
+import com.springboot.template.auth.exception.RestAuthenticationEntryPoint;
+import com.springboot.template.auth.filter.TokenAuthenticationFilter;
+import com.springboot.template.auth.handler.OAuth2AuthenticationFailureHandler;
+import com.springboot.template.auth.handler.OAuth2AuthenticationSuccessHandler;
+import com.springboot.template.auth.handler.TokenAccessDeniedHandler;
+import com.springboot.template.auth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
+import com.springboot.template.auth.service.CustomOAuth2UserService;
+import com.springboot.template.auth.token.AuthTokenProvider;
 import com.springboot.template.user.repository.UserRefreshTokenRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -28,7 +27,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsUtils;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.Arrays;

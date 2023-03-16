@@ -1,6 +1,6 @@
 package com.springboot.template.config.security;
 
-import com.springboot.template.oauth.token.AuthTokenProvider;
+import com.springboot.template.auth.token.AuthTokenProvider;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

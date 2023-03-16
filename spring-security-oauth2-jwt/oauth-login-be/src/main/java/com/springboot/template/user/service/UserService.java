@@ -1,5 +1,6 @@
 package com.springboot.template.user.service;
 
+import com.springboot.template.user.dto.UserDto;
 import com.springboot.template.user.entity.User;
 import com.springboot.template.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -13,4 +14,8 @@ public class UserService {
     public User getUser(String userId) {
         return userRepository.findByUserId(userId);
     }
+
+//    public UserDto saveUser(UserDto userDto) {
+//
+//    }
 }
