@@ -26,19 +26,6 @@ public class UserService {
         return result.map(UserResponseDto::new).orElse(null);
     }
 
-    // 회원 정보 가져오기 (이메일)
-    public UserResponseDto getUserByEmail(String email) {
-        Optional<User> result = userRepository.findByUserEmail(email);
-        return result.map(UserResponseDto::new).orElse(null);
-    }
-
-    // 회원 정보 가져오기 User 그대로
-    public User getUserEntity(String userId) {
-        return userRepository.findEntityByUserId(userId);
-    }
-
-
-
     // 회원 가입
     @Transactional
     public UserResponseDto insertUser(UserRequestDto userDto) {
@@ -74,18 +61,6 @@ public class UserService {
         } catch (RuntimeException e) {
             throw new RestApiException(UserErrorCode.USER_501);
         }
-    }
-
-    // 비밀번호 변경
-    @Transactional
-    public void changePassword(String userId, String userPassword) {
-        Optional<User> result = userRepository.findByUserId(userId);
-        if (result.isEmpty()) {
-            throw new RestApiException(UserErrorCode.USER_402);
-        }
-        User getUser = result.get();
-        getUser.setUserPassword(userPassword);
-        result.map(UserResponseDto::new);
     }
 
 }

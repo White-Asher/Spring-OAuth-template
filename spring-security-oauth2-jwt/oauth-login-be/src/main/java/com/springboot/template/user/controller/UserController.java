@@ -34,7 +34,6 @@ public class UserController {
     private final PasswordEncoder passwordEncoder;
     private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomUserDetailsService customUserDetailsService;
-    private final EmailService emailService;
 
     // 중요한 코드 삭제하지 말것
 //    @GetMapping

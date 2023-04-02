@@ -1,7 +1,6 @@
 package com.springboot.template.utils;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.SerializationUtils;
 

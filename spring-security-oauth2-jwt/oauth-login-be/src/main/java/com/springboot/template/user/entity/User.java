@@ -2,16 +2,11 @@ package com.springboot.template.user.entity;
 
 import com.springboot.template.auth.entity.ProviderType;
 import com.springboot.template.auth.entity.RoleType;
-import com.springboot.template.consulting.entity.Consulting;
-import com.springboot.template.user.dto.UserResponseDto;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;

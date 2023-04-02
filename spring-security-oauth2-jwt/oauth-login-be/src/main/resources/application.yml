@@ -2,8 +2,8 @@ server:
   port: 8080
 spring:
   datasource:
-    driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://docker.host.internal:3306/dbname?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+    driver-class-name: org.mariadb.jdbc.Driver
+    url: jdbc:mariadb://host.docker.internal:3308/dbname
     username: root
     password: root
     hikari:
@@ -15,6 +15,15 @@ spring:
       driver-class-name: ${spring.datasource.driver-class-name}
       data-source-properties:
         rewriteBatchedStatements: true
+  redis:
+    lettuce:
+      pool:
+        max-active: 10
+        max-idle: 10
+        min-idle: 2
+    port: 6378
+    host: host.docker.internal
+    password: '1q2w3e4r'
   # JPA 설정
   jpa:
     database : mysql
@@ -23,11 +32,12 @@ spring:
       ddl-auto: none
     properties:
       hibernate:
-        jdbc.batch_size: 100
+        jdbc.batch_size: 1000
         format_sql: true
         show_sql: true
         use_sql_comments: true
     defer-datasource-initialization: true
+    open-in-view: false
   # Security OAuth
   security:
     oauth2.client:

@@ -17,10 +17,10 @@ public class OpenApiConfig {
     public OpenAPI openAPI() {
         final String securitySchemeName = "bearerAuth";
 
-        Info info = new Info().title("Soboro API").version("Ver.1.1.0")
-                .description("Soboro API문서 입니다.")
+        Info info = new Info().title("TemaplteName API").version("Ver.1.1.0")
+                .description("TemaplteName API문서 입니다.")
 //                .termsOfService("http://swagger.io/terms/")\
-                .contact(new Contact().name("Soboro").url("http://localhost:8080").email("soboroservice@soboro.com"))
+                .contact(new Contact().name("TemaplteName").url("http://localhost:8080").email("TemplateEmail@Email.com"))
                 .license(new License().name("MIT Licence").url("https://opensource.org/licenses/MIT"));
 
         return new OpenAPI()

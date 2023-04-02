@@ -66,14 +66,14 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR : 서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "USER_400", description = "로그인 실패 : ID, PW 확인", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<?> login(
-            HttpServletRequest request,
-            HttpServletResponse response,
+    public ResponseEntity<?> login(HttpServletRequest request, HttpServletResponse response,
             @Parameter(description = "로그인 아이디, 비밀번호") @RequestBody AuthReqModel authReqModel
     ) {
-        log.info("일반로그인 post 요청");
+        log.info("/api/auth/login | Post Method | 일반로그인 호출됨");
         log.info("authReqModel : {}", authReqModel);
         Authentication authentication = null;
+
+        // ID, PW 검증
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
@@ -81,12 +81,13 @@ public class AuthController {
                             authReqModel.getPassword()
                     )
             );
-        }catch (BadCredentialsException | InternalAuthenticationServiceException e) {
+        } catch (BadCredentialsException | InternalAuthenticationServiceException e) {
             throw new RestApiException(UserErrorCode.USER_400);
         }
-
+        
         log.info("authentication : {} ", authentication);
 
+        // 로그인 정보를 SecurityContextHolder에 적재함.
         String userId = authReqModel.getId();
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
@@ -120,8 +121,12 @@ public class AuthController {
         int cookieMaxAge = (int) refreshTokenExpiry / 60;
         CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
         CookieUtil.addCookie(response, REFRESH_TOKEN, refreshToken.getToken(), cookieMaxAge);
+        
+        // Header Authorization에 AccessToken 적재
+        response.setContentType("application/json;charset=UTF-8");
+        response.setHeader("Authorization", "Bearer " + accessToken.getToken());
 
-        return ResponseEntity.ok().body(new RestApiResponse<>("로그인 완료", accessToken.getToken()));
+        return ResponseEntity.ok().body(new RestApiResponse<>("로그인 완료"));
     }
 
     @PostMapping("/logout")
