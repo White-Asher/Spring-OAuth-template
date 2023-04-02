@@ -6,9 +6,14 @@ import com.springboot.template.auth.entity.UserPrincipal;
 import com.springboot.template.auth.exception.OAuthProviderMissMatchException;
 import com.springboot.template.auth.info.OAuth2UserInfo;
 import com.springboot.template.auth.info.OAuth2UserInfoFactory;
+import com.springboot.template.common.error.errorcode.UserErrorCode;
+import com.springboot.template.common.error.exception.RestApiException;
+import com.springboot.template.config.properties.AppProperties;
 import com.springboot.template.user.entity.User;
 import com.springboot.template.user.repository.UserRepository;
+import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
@@ -18,6 +23,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * 위 코드는 Spring Security와 OAuth2.0을 이용한 소셜 로그인에 사용되는 CustomOAuth2UserService 클래스입니다. <br>
@@ -29,16 +35,17 @@ import java.time.LocalDateTime;
  * 마지막으로 **`UserPrincipal.create()`**를 호출하여 UserPrincipal 객체를 생성하고, 이를 반환합니다. <br>
  */
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
+    private final AppProperties appProperties;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User user = super.loadUser(userRequest);
-
         try {
             return this.process(userRequest, user);
         } catch (AuthenticationException ex) {
@@ -53,7 +60,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         ProviderType providerType = ProviderType.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
 
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(providerType, user.getAttributes());
-        User savedUser = userRepository.findByUserId(userInfo.getId());
+//        User savedUser = userRepository.findByUserId(userInfo.getId());
+        // 수정부분
+        Optional<User> result = userRepository.findByUserId(userInfo.getId());
+        User savedUser = result.orElseThrow(()->new RestApiException(UserErrorCode.USER_402));
 
         if (savedUser != null) {
             if (providerType != savedUser.getProviderType()) {
@@ -66,11 +76,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         } else {
             savedUser = createUser(userInfo, providerType);
         }
-
         return UserPrincipal.create(savedUser, user.getAttributes());
     }
 
-    // 소셜 로그인 회원가입 (소셜 로그인 시 DB에 없으면 회원가입 로직을 수행함)
+    // 소셜회원가입 (소셜 로그인 시 DB에 없으면 회원가입 로직을 수행함)
     private User createUser(OAuth2UserInfo userInfo, ProviderType providerType) {
         LocalDateTime now = LocalDateTime.now();
         User user = User.builder()
@@ -79,7 +88,6 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .userName(userInfo.getName())
                 .userEmail(userInfo.getEmail() != null ? userInfo.getEmail() : "NO_EMAIL")
                 .userPhone("NO_PHONE")
-                .userBirthDate("BD")
                 .userGender("N")
                 .userTerms(true)
                 .providerType(providerType)
@@ -87,30 +95,24 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
                 .createdAt(now)
                 .userActive(true)
                 .build();
-
-//        User user = new User(
-//                userInfo.getId(),
-//                userInfo.getName(),
-//                userInfo.getEmail(),
-//
-//                providerType,
-//                RoleType.USER,
-//                now,
-//        );
-
         return userRepository.saveAndFlush(user);
     }
 
-    // 회원수정
+    // 소셜회원 정보수정
     private User updateUser(User user, OAuth2UserInfo userInfo) {
         if (userInfo.getName() != null && !user.getUserName().equals(userInfo.getName())) {
             user.setUserName(userInfo.getName());
         }
-
-//        if (userInfo.getImageUrl() != null && !user.getProfileImageUrl().equals(userInfo.getImageUrl())) {
-//            user.setProfileImageUrl(userInfo.getImageUrl());
-//        }
-
         return user;
     }
+
+    public String getId(String token) {
+        log.info("getId method token : {}", token);
+        return Jwts.parserBuilder()
+                .setSigningKey(appProperties.getAuth().getTokenSecret().getBytes())
+                .build()
+                .parseClaimsJws(token).getBody()
+                .getSubject();
+    }
+
 }

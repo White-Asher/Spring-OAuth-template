@@ -1,6 +1,9 @@
 package com.springboot.template.auth.exception;
 
+import com.springboot.template.common.error.response.ErrorResponse;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
@@ -10,8 +13,6 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * 이 코드는 Spring Security에서 인증되지 않은 사용자가 보호된 리소스에 접근했을 때 호출되는 AuthenticationEntryPoint의 구현체이다. <br>
@@ -31,19 +32,18 @@ public class RestAuthenticationEntryPoint implements AuthenticationEntryPoint {
             HttpServletResponse response,
             AuthenticationException authException
     ) throws IOException, ServletException {
-        
+        log.info("RestAuthenticationEntryPoint 메서드 호출");
+
         // Unauthorized 응답 커스터 마이징
-        Map<String, Object> resultMap = new HashMap<>();
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
-        resultMap.put("status", HttpServletResponse.SC_UNAUTHORIZED);
-        resultMap.put("error", "Unauthorized");
-        resultMap.put("message", authException.getMessage());
-        resultMap.put("path", request.getServletPath());
-
+//        ErrorResponse result = new ErrorResponse(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized", authException.getMessage());
+        ErrorResponse result = new ErrorResponse("Unauthorized", authException.getMessage());
+        log.info("RestAuthenticationEntryPoint ErrorResponse : {}", result);
         final ObjectMapper mapper = new ObjectMapper();
-        mapper.writeValue(response.getOutputStream(), resultMap);
+        mapper.registerModule(new JavaTimeModule());
+        mapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+        mapper.writeValue(response.getOutputStream(), result);
         response.setStatus(HttpServletResponse.SC_OK);
-
         authException.printStackTrace();
         log.info("Responding with unauthorized error. Message := {}", authException.getMessage());
 

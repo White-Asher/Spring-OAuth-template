@@ -1,13 +1,20 @@
 package com.springboot.template.auth.service;
 
 import com.springboot.template.auth.entity.UserPrincipal;
+import com.springboot.template.common.error.errorcode.UserErrorCode;
+import com.springboot.template.common.error.exception.RestApiException;
+import com.springboot.template.user.dto.UserResponseDto;
 import com.springboot.template.user.entity.User;
 import com.springboot.template.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+
+import java.util.Optional;
 
 /**
  * 위 코드는 Spring Security를 사용하여 사용자 인증을 구현하는 과정에서 사용자 정보를 조회하는 CustomUserDetailsService 클래스의 구현 코드입니다. <br>
@@ -22,16 +29,33 @@ import org.springframework.stereotype.Service;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class CustomUserDetailsService implements UserDetailsService {
 
     private final UserRepository userRepository;
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByUserId(username);
-        if (user == null) {
-            throw new UsernameNotFoundException("Can not find username.");
-        }
+        log.info("loadUserByUsername 호출됨");
+        Optional<User> result = userRepository.findByUserId(username);
+        User user = result.orElseThrow(()->new RestApiException(UserErrorCode.USER_402));
         return UserPrincipal.create(user);
     }
+
+    public UserResponseDto currentLoadUserByUserId() throws UsernameNotFoundException {
+        UserResponseDto userResponseDto = null;
+        org.springframework.security.core.userdetails.User principal = null;
+        try {
+            principal = (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        } catch (ClassCastException e){
+            throw new RestApiException(UserErrorCode.USER_403);
+        }
+        log.info("SecurityContextHolder : {} ", SecurityContextHolder.getContext().getAuthentication().getPrincipal());
+        String id = principal.getUsername();
+        Optional<User> result = userRepository.findByUserId(id);
+        log.info("result: {}", result);
+        userResponseDto = new UserResponseDto(result.orElseThrow(() -> new RestApiException(UserErrorCode.USER_402)));
+        return userResponseDto;
+    }
+
 }

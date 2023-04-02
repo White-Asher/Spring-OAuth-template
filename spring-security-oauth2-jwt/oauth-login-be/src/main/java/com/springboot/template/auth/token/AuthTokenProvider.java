@@ -1,7 +1,7 @@
 package com.springboot.template.auth.token;
 
-import com.springboot.template.auth.exception.TokenValidFailedException;
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -50,9 +50,14 @@ public class AuthTokenProvider {
         return new AuthToken(token, key);
     }
 
+    public String getPayload(String token, String className) {
+        return Jwts.parserBuilder().setSigningKey(key)
+                        .build().parseClaimsJws(token).getBody().get(className,String.class);
+    }
+
     public Authentication getAuthentication(AuthToken authToken) {
 
-        if(authToken.validate()) {
+//        if(authToken.validate()) {
 
             Claims claims = authToken.getTokenClaims();
             Collection<? extends GrantedAuthority> authorities =
@@ -64,8 +69,13 @@ public class AuthTokenProvider {
             User principal = new User(claims.getSubject(), "", authorities);
 
             return new UsernamePasswordAuthenticationToken(principal, authToken, authorities);
-        } else {
-            throw new TokenValidFailedException();
-        }
+//        }
+//        else {
+//            throw new TokenValidFailedException();
+//        }
+    }
+
+    public Claims getClaims (AuthToken authToken){
+        return authToken.getTokenClaims();
     }
 }

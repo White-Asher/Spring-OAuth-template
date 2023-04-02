@@ -1,11 +1,18 @@
 package com.springboot.template.user.repository;
 
+import org.springframework.data.repository.CrudRepository;
 import com.springboot.template.user.entity.UserRefreshToken;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
+/**
+ * redis Refresh token repository
+ */
 @Repository
-public interface UserRefreshTokenRepository extends JpaRepository<UserRefreshToken, Long> {
-    UserRefreshToken findByUserId(String userId);
-    UserRefreshToken findByUserIdAndRefreshToken(String userId, String refreshToken);
+@Component
+public interface UserRefreshTokenRepository extends CrudRepository<UserRefreshToken,String> {
+
+    Optional<UserRefreshToken> findByValue(String value);
 }

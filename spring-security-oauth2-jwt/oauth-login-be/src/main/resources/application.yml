@@ -2,8 +2,8 @@ server:
   port: 8080
 spring:
   datasource:
-    driver-class-name: org.mariadb.jdbc.Driver
-    url: jdbc:mariadb://localhost:3306/
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://docker.host.internal:3306/dbname?useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
     username: root
     password: root
     hikari:
@@ -32,9 +32,32 @@ spring:
   security:
     oauth2.client:
       registration:
+        google:
+          clientId: '{구글 client-id}'
+          clientSecret: '{구글 client-secret}'
+          scope:
+            - email
+            - profile
+        facebook:
+          clientId: '{페이스북 client-id}'
+          clientSecret: '{페이스북 client-secret}'
+          scope:
+            - email
+            - public_profile
+        naver:
+          clientId: '{네이버 client-id}'
+          clientSecret: '{네이버 client-secret}'
+          clientAuthenticationMethod: post
+          authorizationGrantType: authorization_code
+          redirectUri: "{baseUrl}/{action}/oauth2/code/{registrationId}"
+          scope:
+            - nickname
+            - email
+            - profile_image
+          clientName: Naver
         kakao:
-          clientId:
-          clientSecret:
+          clientId: '{카카오 client-id}'
+          clientSecret: '{카카오 client-secret}'
           clientAuthenticationMethod: post
           authorizationGrantType: authorization_code
           redirectUri: http://localhost:8080/login/oauth2/code/kakao
@@ -45,6 +68,11 @@ spring:
           clientName: Kakao
       # Provider 설정
       provider:
+        naver:
+          authorizationUri: https://nid.naver.com/oauth2.0/authorize
+          tokenUri: https://nid.naver.com/oauth2.0/token
+          userInfoUri: https://openapi.naver.com/v1/nid/me
+          userNameAttribute: response
         kakao:
           authorizationUri: https://kauth.kakao.com/oauth/authorize
           tokenUri: https://kauth.kakao.com/oauth/token
