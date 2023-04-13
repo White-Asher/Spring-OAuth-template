@@ -1,4 +1,4 @@
-package com.springboot.template.config.properties;
+package com.springboot.template.config;
 
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.context.annotation.Bean;

@@ -6,45 +6,29 @@ import org.springframework.stereotype.Component;
 import javax.servlet.http.HttpServletRequest;
 
 /**
- * 해당 코드는 HTTP 요청 헤더에서 Authorization 필드를 통해 전달된 JWT 토큰을 추출하는 유틸리티 클래스인 HeaderUtil 입니다. <br>
- * HTTP 요청 헤더에서 Authorization 필드의 값은 "Bearer <JWT 토큰>" 형태로 전달됩니다. <br>
- * 따라서 HeaderUtil 클래스에서는 getAccessToken() 메소드를 통해 전달된 HttpServletRequest 객체에서 Authorization 필드를 추출하고, 해당 값이 "Bearer " 로 시작하는 경우에 대해서만 JWT 토큰 값을 추출하여 반환합니다. <br>
- * 만약 Authorization 필드가 없거나 "Bearer " 로 시작하지 않는 경우에는 null 값을 반환합니다. <br>
- * 즉, HeaderUtil.getAccessToken(request) 메소드를 호출하면 HTTP 요청 헤더에서 추출한 JWT 토큰 값을 반환합니다. <br>
- * 이 JWT 토큰은 보통 Spring Security와 같은 인증 및 권한 부여 프레임워크에서 사용됩니다.
+ * 이 코드는 스프링 부트 애플리케이션에서 사용되는 유틸리티 클래스인 HeaderUtil입니다. <br>
+ * 이 클래스는 HTTP 요청에서 토큰을 추출하는 기능을 제공합니다. <br>
+ * 해당 클래스는 @Component 어노테이션이 지정되어 있어 스프링이 컴포넌트 스캔을 수행할 때 빈으로 등록되어 사용됩니다. <br>
+ * 또한 @Slf4j 어노테이션으로 인해 log 객체가 생성되어 로그 출력에 사용됩니다. <br>
+ * getAccessToken 메서드는 HttpServletRequest 객체와 두 개의 문자열 파라미터(headerAuth와 tokenPrefix)를 입력 받습니다.
+ * 이 메서드는 HttpServletRequest에서 headerAuth 이름으로 지정된 HTTP 헤더 값을 가져와서 출력하고, 해당 값이 null이면 null을 반환합니다. <br>
+ * headerAuth 문자열이 tokenPrefix로 시작하면, tokenPrefix의 길이 이후의 문자열을 반환합니다.  <br>
+ * 그렇지 않으면 null을 반환합니다. 이 메서드는 대개 JWT 토큰을 추출하기 위해 사용됩니다.
  */
 
 @Slf4j
 @Component
 public class HeaderUtil {
 
-    private final static String HEADER_AUTHORIZATION = "Authorization";
-    private final static String TOKEN_PREFIX = "Bearer ";
-
-    public static String getAccessToken(HttpServletRequest request) {
-        String headerValue = request.getHeader(HEADER_AUTHORIZATION);
+    public static String getAccessToken(HttpServletRequest request, String headerAuth, String tokenPrefix) {
+        String headerValue = request.getHeader(headerAuth);
         log.info("Access Token (HEADER) = {}", headerValue);
-
         if (headerValue == null) {
             return null;
         }
-
-        if (headerValue.startsWith(TOKEN_PREFIX)) {
-            return headerValue.substring(TOKEN_PREFIX.length());
+        if (headerValue.startsWith(tokenPrefix)) {
+            return headerValue.substring(tokenPrefix.length());
         }
-
-        return null;
-    }
-
-    public static String getAccessTokenString(String headerValue) {
-        if (headerValue == null) {
-            return null;
-        }
-
-        if (headerValue.startsWith(TOKEN_PREFIX)) {
-            return headerValue.substring(TOKEN_PREFIX.length());
-        }
-
         return null;
     }
 }

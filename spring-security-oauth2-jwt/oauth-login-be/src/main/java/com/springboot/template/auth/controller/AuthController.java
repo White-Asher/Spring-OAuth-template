@@ -6,13 +6,14 @@ import com.springboot.template.common.error.errorcode.UserErrorCode;
 import com.springboot.template.common.error.exception.RestApiException;
 import com.springboot.template.common.error.response.ErrorResponse;
 import com.springboot.template.common.response.RestApiResponse;
-import com.springboot.template.config.properties.AppProperties;
+import com.springboot.template.config.OpenApiConfig;
+import com.springboot.template.config.properties.TokenProperties;
 import com.springboot.template.auth.entity.UserPrincipal;
 import com.springboot.template.auth.token.AuthToken;
 import com.springboot.template.auth.token.AuthTokenProvider;
 import com.springboot.template.user.dto.UserResponseDto;
-import com.springboot.template.user.repository.UserRefreshTokenRepository;
 import com.springboot.template.utils.CookieUtil;
+import com.springboot.template.utils.HeaderUtil;
 import com.springboot.template.utils.RedisUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -45,15 +46,11 @@ import java.util.Date;
 
 public class AuthController {
 
-    private final AppProperties appProperties;
+    private final TokenProperties tokenProperties;
     private final AuthTokenProvider tokenProvider;
     private final AuthenticationManager authenticationManager;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
     private final CustomUserDetailsService customUserDetailsService;
     private final RedisUtil redisUtil;
-
-    private final static long THREE_DAYS_MSEC = 259200000;
-    private final static String REFRESH_TOKEN = "refresh_token";
 
     @PostMapping("/login")
     @Operation(summary = "일반 로그인", description = "일반 로그인 API", tags = {"auth"})
@@ -66,7 +63,7 @@ public class AuthController {
             @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR : 서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "USER_400", description = "로그인 실패 : ID, PW 확인", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<?> login(HttpServletRequest request, HttpServletResponse response,
+    public RestApiResponse<String> login(HttpServletRequest request, HttpServletResponse response,
             @Parameter(description = "로그인 아이디, 비밀번호") @RequestBody AuthReqModel authReqModel
     ) {
         log.info("/api/auth/login | Post Method | 일반로그인 호출됨");
@@ -77,11 +74,12 @@ public class AuthController {
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            authReqModel.getId(),
+                            authReqModel.getId(), 
                             authReqModel.getPassword()
                     )
             );
         } catch (BadCredentialsException | InternalAuthenticationServiceException e) {
+            log.info("/api/auth/login | Post Method | 로그인 검증 실패");
             throw new RestApiException(UserErrorCode.USER_400);
         }
         
@@ -92,41 +90,44 @@ public class AuthController {
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
         Date now = new Date();
+        // Access Token 생성 (id, role, expireTime)
         AuthToken accessToken = tokenProvider.createAuthToken(
                 userId,
                 ((UserPrincipal) authentication.getPrincipal()).getRoleType().getCode(),
-                new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
+                new Date(now.getTime() + tokenProperties.getAuth().getAccessTokenExpiry())
         );
 
-        log.info("ac token : {} ", accessToken);
+        log.info("Create Access Token : {} ", accessToken);
 
-        long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
+        // Refresh Token 생성 (id, role, expireTime)
+        long refreshTokenExpiry = tokenProperties.getAuth().getRefreshTokenExpiry();
         AuthToken refreshToken = tokenProvider.createAuthToken(
                 userId,
                 ((UserPrincipal) authentication.getPrincipal()).getRoleType().getCode(),
                 new Date(now.getTime() + refreshTokenExpiry)
         );
 
-        log.info("rf token : {} ", refreshToken);
+        log.info("Create Refresh Token : {} ", refreshToken);
 
+        // Redis 에 키값으로 userId가 있으면(refreshtoken이 있다면...) redis 에서 삭제 수행.
         if (redisUtil.getData(userId) != null) {
-            log.info("refresh token exists and Remove refresh token");
-            userRefreshTokenRepository.deleteById(userId);
+            log.info("refresh token redis exists and Remove refresh token");
+            redisUtil.delData(userId);
         }
 
-        // DB에 refresh 토큰 새로 넣기
+        // redis 에 refresh 토큰 새로 넣기
         redisUtil.setDataExpire(userId, refreshToken.getToken(), refreshTokenExpiry);
         
         // 쿠키 만료시간 설정
-        int cookieMaxAge = (int) refreshTokenExpiry / 60;
-        CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
-        CookieUtil.addCookie(response, REFRESH_TOKEN, refreshToken.getToken(), cookieMaxAge);
+        int cookieMaxAge = (int) refreshTokenExpiry;
+        CookieUtil.deleteCookie(request, response, tokenProperties.getAuth().getRefreshTokenName());
+        CookieUtil.addCookie(response, tokenProperties.getAuth().getRefreshTokenName(), refreshToken.getToken(), cookieMaxAge);
         
-        // Header Authorization에 AccessToken 적재
+        // Header Authorization 에 AccessToken 적재
         response.setContentType("application/json;charset=UTF-8");
-        response.setHeader("Authorization", "Bearer " + accessToken.getToken());
-
-        return ResponseEntity.ok().body(new RestApiResponse<>("로그인 완료"));
+        response.setHeader(tokenProperties.getAuth().getAccessTokenHeaderName(),
+                    tokenProperties.getAuth().getAccessTokenHeaderPrefix() + accessToken.getToken());
+        return new RestApiResponse<>("로그인 완료");
     }
 
     @PostMapping("/logout")
@@ -139,82 +140,10 @@ public class AuthController {
             @ApiResponse(responseCode = "404", description = "NOT FOUND : 잘못된 서버 경로 요청", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR : 서버 에러", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
-    @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+    @SecurityRequirement(name = OpenApiConfig.securitySchemeName)
+    public RestApiResponse<UserResponseDto> logout(HttpServletRequest request, HttpServletResponse response) {
         UserResponseDto userResponseDto = customUserDetailsService.currentLoadUserByUserId();
-        return ResponseEntity.ok().body(new RestApiResponse<>("로그아웃 완료", userResponseDto));
+        return new RestApiResponse<>("로그아웃 완료", userResponseDto);
     }
 
-//    @GetMapping("/refresh")
-//    @Operation(summary = "Refresh token 재발급 (페기 예정)", description = "Refresh token 재발급 API", tags = {"auth"})
-//    public ResponseEntity<?> refreshToken (HttpServletRequest request, HttpServletResponse response) {
-//        // access token 확인
-//        String accessToken = HeaderUtil.getAccessToken(request);
-//        AuthToken authToken = tokenProvider.convertAuthToken(accessToken);
-////        authToken.validate();
-//
-////        if (!authToken.validate()) {
-////            return ApiResponse.invalidAccessToken();
-////        }
-//
-//        // expired access token 인지 확인
-////        Claims claims = authToken.getExpiredTokenClaims();
-//        Claims claims = authToken.getTokenClaims();
-//
-////        if (claims == null) {
-////            return ApiResponse.notExpiredTokenYet();
-////        }
-//
-//        String userId = claims.getSubject();
-//        RoleType roleType = RoleType.of(claims.get("role", String.class));
-//
-//        // refresh token
-//        String refreshToken = CookieUtil.getCookie(request, REFRESH_TOKEN)
-//                .map(Cookie::getValue)
-//                .orElse((null));
-//        AuthToken authRefreshToken = tokenProvider.convertAuthToken(refreshToken);
-//        authRefreshToken.validate();
-//
-////        if (authRefreshToken.validate()) {
-////            return ApiResponse.invalidRefreshToken();
-////        }
-//
-//        // userId refresh token 으로 DB 확인
-//        String userRefreshToken = redisUtil.getData((String) userId);
-//        // UserRefreshToken userRefreshToken = userRefreshTokenRepository.findByUserIdAndRefreshToken(userId, refreshToken);
-//        if (userRefreshToken == null) {
-//            throw new JwtException("토큰이 유효하지 않음");
-//        }
-//
-//        Date now = new Date();
-//        AuthToken newAccessToken = tokenProvider.createAuthToken(
-//                userId,
-//                roleType.getCode(),
-//                new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
-//        );
-//
-//        long validTime = authRefreshToken.getTokenClaims().getExpiration().getTime() - now.getTime();
-//
-//        // refresh 토큰 기간이 3일 이하로 남은 경우, refresh 토큰 갱신
-//        if (validTime <= THREE_DAYS_MSEC) {
-//            // refresh 토큰 설정
-//            long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
-//
-//            authRefreshToken = tokenProvider.createAuthToken(
-//                    userId,
-//                    roleType.getCode(),
-//                    new Date(now.getTime() + refreshTokenExpiry)
-//            );
-//
-//            // DB에 refresh 토큰 업데이트
-//            // userRefreshToken.setRefreshToken(authRefreshToken.getToken());
-//            redisUtil.setDataExpire(userId, authRefreshToken.getToken(), refreshTokenExpiry);
-//
-//            int cookieMaxAge = (int) refreshTokenExpiry / 60;
-//            CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
-//            CookieUtil.addCookie(response, REFRESH_TOKEN, authRefreshToken.getToken(), cookieMaxAge);
-//        }
-//
-//        return ResponseEntity.ok().body(newAccessToken.getToken());
-//    }
 }

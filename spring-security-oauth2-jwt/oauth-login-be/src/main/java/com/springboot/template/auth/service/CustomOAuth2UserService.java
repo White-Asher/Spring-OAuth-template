@@ -8,10 +8,8 @@ import com.springboot.template.auth.info.OAuth2UserInfo;
 import com.springboot.template.auth.info.OAuth2UserInfoFactory;
 import com.springboot.template.common.error.errorcode.UserErrorCode;
 import com.springboot.template.common.error.exception.RestApiException;
-import com.springboot.template.config.properties.AppProperties;
 import com.springboot.template.user.entity.User;
 import com.springboot.template.user.repository.UserRepository;
-import io.jsonwebtoken.Jwts;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
@@ -41,7 +39,6 @@ import java.util.Optional;
 public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     private final UserRepository userRepository;
-    private final AppProperties appProperties;
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
@@ -99,20 +96,10 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     // 소셜회원 정보수정
-    private User updateUser(User user, OAuth2UserInfo userInfo) {
+    private void updateUser(User user, OAuth2UserInfo userInfo) {
         if (userInfo.getName() != null && !user.getUserName().equals(userInfo.getName())) {
             user.setUserName(userInfo.getName());
         }
-        return user;
-    }
-
-    public String getId(String token) {
-        log.info("getId method token : {}", token);
-        return Jwts.parserBuilder()
-                .setSigningKey(appProperties.getAuth().getTokenSecret().getBytes())
-                .build()
-                .parseClaimsJws(token).getBody()
-                .getSubject();
     }
 
 }

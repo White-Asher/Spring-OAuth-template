@@ -4,7 +4,7 @@ import com.springboot.template.auth.entity.RoleType;
 import com.springboot.template.auth.token.AuthToken;
 import com.springboot.template.auth.token.AuthTokenProvider;
 import com.springboot.template.common.error.response.ErrorResponse;
-import com.springboot.template.config.properties.AppProperties;
+import com.springboot.template.config.properties.TokenProperties;
 import com.springboot.template.utils.CookieUtil;
 import com.springboot.template.utils.HeaderUtil;
 import com.springboot.template.utils.RedisUtil;
@@ -47,7 +47,7 @@ import java.util.Date;
 public class TokenAuthenticationFilter extends OncePerRequestFilter {
     private final AuthTokenProvider tokenProvider;
     private final RedisUtil redisUtil;
-    private final AppProperties appProperties;
+    private final TokenProperties tokenProperties;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
@@ -55,11 +55,12 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
         log.info("TokenAuthenticationFilter 호출됨");
 
         String refreshToken = null;
-        String REFRESH_TOKEN = "refresh_token";
 
         try {
             // Header 에서 accessToken 정보를 가져온다.
-            String accessToken = HeaderUtil.getAccessToken(request);
+            String accessToken = HeaderUtil.getAccessToken(request,
+                    tokenProperties.getAuth().getAccessTokenHeaderName(),
+                    tokenProperties.getAuth().getAccessTokenHeaderPrefix());
             // 토큰이 없으면 필터에서 검증하지 않고 통과
             if (accessToken != null) {
                 AuthToken authAccessToken = tokenProvider.convertAuthToken(accessToken);
@@ -82,7 +83,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             e.printStackTrace();
 
             // refresh token 가져오기
-            refreshToken = CookieUtil.getCookie(request, REFRESH_TOKEN)
+            refreshToken = CookieUtil.getCookie(request, tokenProperties.getAuth().getRefreshTokenName())
                     .map(Cookie::getValue)
                     .orElse((null));
 
@@ -110,7 +111,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             String userRefreshToken = redisUtil.getData(userId);
             log.info("TokenAuthenticationFilter | ExpiredJwtException | userRefreshToken : {} ", userRefreshToken);
             if (userRefreshToken == null) {
-                CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
+                CookieUtil.deleteCookie(request, response, tokenProperties.getAuth().getRefreshTokenName());
                 throw new JwtException("Refresh Token DB에 없음");
             }
 
@@ -119,7 +120,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             AuthToken newAccessToken = tokenProvider.createAuthToken(
                     userId,
                     roleType.getCode(),
-                    new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
+                    new Date(now.getTime() + tokenProperties.getAuth().getAccessTokenExpiry())
             );
 
             Authentication newAccessTokenAuthentication = tokenProvider.getAuthentication(newAccessToken);
@@ -137,7 +138,7 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
             // Refresh Token 기간이 3일 이하로 남은 경우, Refresh Token 갱신
             if (validTime <= 1000L * 60L * 60L * 24L * 3L) {
                 // Refresh Token 만료시간설정
-                long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
+                long refreshTokenExpiry = tokenProperties.getAuth().getRefreshTokenExpiry();
                 authRefreshToken = tokenProvider.createAuthToken(
                         userId,
                         roleType.getCode(),
@@ -147,10 +148,10 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
                 // Redis 에 refresh 토큰 업데이트
                 redisUtil.setDataExpire(userId, authRefreshToken.getToken(), refreshTokenExpiry);
 
-                // 만료시간 설정 후 쿠키 적재재
-               int cookieMaxAge = (int) refreshTokenExpiry / 60;
-                CookieUtil.deleteCookie(request, response, REFRESH_TOKEN);
-                CookieUtil.addCookie(response, REFRESH_TOKEN, authRefreshToken.getToken(), cookieMaxAge);
+                // 만료시간 설정 후 쿠키 적재
+                int cookieMaxAge = (int) refreshTokenExpiry;
+                CookieUtil.deleteCookie(request, response, tokenProperties.getAuth().getRefreshTokenName());
+                CookieUtil.addCookie(response, tokenProperties.getAuth().getRefreshTokenName(), authRefreshToken.getToken(), cookieMaxAge);
             }
 
         }

@@ -96,15 +96,15 @@ cors:
   allowed-headers: '*'
   max-age: 3600
 
-# jwt secret key 설정
-jwt.secret: '8sknjlO3NPTBqo319DHLNqsQAfRJEdKsETOds'
-
 # 토큰 관련 secret Key 및 RedirectUri 설정
-app:
+token:
   auth:
     tokenSecret: 926D96C90030DD58429D2751AC1BDBBC
-    tokenExpiry: 1800000
+    accessTokenExpiry: 1800000
     refreshTokenExpiry: 604800000
+    accessTokenHeaderName: "Authorization"
+    accessTokenHeaderPrefix: "Bearer "
+    refreshTokenName: "refresh_token"
   oauth2:
     authorizedRedirectUris:
       - http://localhost:3000/oauth/redirect

@@ -39,31 +39,29 @@ public class CookieUtil {
         return Optional.empty();
     }
 
-    public static String getRefreshTokenCookie(HttpServletRequest request) {
+    public static String getRefreshTokenCookie(HttpServletRequest request, String name) {
         log.info("request.getCookies() : {} ", request.getCookies().length);
         for (Cookie cookie : request.getCookies()) {
             log.info("getRefreshTokenCookie | Cookie name = {}, Cookie Value = {}", cookie.getName(),cookie.getValue());
-            if (cookie.getName().equals("refresh_token")) {
+            if (name.equals(cookie.getName())) {
                 return cookie.getValue();
             }
         }
-//        throw new JwtException("RefreshToken is invaild");
         return null;
     }
 
 
     public static void addCookie(HttpServletResponse response, String name, String value, int maxAge) {
-        log.info("addCookie");
+        log.info("addCookie RefreshToken");
         Cookie cookie = new Cookie(name, value);
         cookie.setPath("/");
         cookie.setHttpOnly(true);
         cookie.setMaxAge(maxAge);
-
         response.addCookie(cookie);
     }
 
     public static void deleteCookie(HttpServletRequest request, HttpServletResponse response, String name) {
-        log.info("deleteCookie");
+        log.info("deleteCookie RefreshToken");
         Cookie[] cookies = request.getCookies();
         if (cookies != null) {
             for (Cookie cookie : cookies) {

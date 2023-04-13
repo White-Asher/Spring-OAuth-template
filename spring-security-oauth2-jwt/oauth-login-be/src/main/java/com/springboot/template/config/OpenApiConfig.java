@@ -1,11 +1,10 @@
-package com.springboot.template.config.properties;
+package com.springboot.template.config;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -13,9 +12,10 @@ import org.springframework.stereotype.Component;
 @Component
 public class OpenApiConfig {
 
+    public final static String securitySchemeName = "bearerAuth";
     @Bean
     public OpenAPI openAPI() {
-        final String securitySchemeName = "bearerAuth";
+
 
         Info info = new Info().title("TemaplteName API").version("Ver.1.1.0")
                 .description("TemaplteName API문서 입니다.")

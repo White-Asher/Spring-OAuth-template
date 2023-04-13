@@ -1,7 +1,6 @@
-package com.springboot.template.config.sercurity;
+package com.springboot.template.config;
 
-import com.springboot.template.auth.token.AuthToken;
-import com.springboot.template.config.properties.AppProperties;
+import com.springboot.template.config.properties.TokenProperties;
 import com.springboot.template.config.properties.CorsProperties;
 import com.springboot.template.auth.exception.RestAuthenticationEntryPoint;
 import com.springboot.template.auth.filter.TokenAuthenticationFilter;
@@ -12,9 +11,6 @@ import com.springboot.template.auth.repository.OAuth2AuthorizationRequestBasedOn
 import com.springboot.template.auth.service.CustomOAuth2UserService;
 import com.springboot.template.auth.token.AuthTokenProvider;
 import com.springboot.template.auth.handler.CustomLogoutSuccessHandler;
-import com.springboot.template.user.repository.UserRefreshTokenRepository;
-import com.springboot.template.user.service.UserService;
-import com.springboot.template.utils.CookieUtil;
 import com.springboot.template.utils.RedisUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,7 +21,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -46,19 +41,16 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final CorsProperties corsProperties;
-    private final AppProperties appProperties;
+    private final TokenProperties tokenProperties;
     private final AuthTokenProvider tokenProvider;
-    private final UserDetailsService userDetailsService;
     private final CustomOAuth2UserService oAuth2UserService;
     private final TokenAccessDeniedHandler tokenAccessDeniedHandler;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
     private final RedisUtil redisUtil;
     private final CustomLogoutSuccessHandler logoutSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // 지정된 필터 앞에 커스텀 필터를 추가 (UsernamePasswordAuthenticationFilter 보다 먼저 실행된다)
                 .cors()
                 .and()
                 // 스프링 시큐리티 세션 정책
@@ -70,9 +62,12 @@ public class SecurityConfig {
                 .csrf().disable()
                 .formLogin().disable()
                 .httpBasic().disable()
+                // 지정된 필터 앞에 커스텀 필터를 추가 (UsernamePasswordAuthenticationFilter 보다 먼저 실행된다)
                 .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()
+                // 예외 터지면 RestAuthenticationEntryPoint 에서 받아서 처리함. 
                 .authenticationEntryPoint(new RestAuthenticationEntryPoint())
+                // 접근 권한이 거부되면 실행되는 핸들러
                 .accessDeniedHandler(tokenAccessDeniedHandler)
                 .and()
                 // 요청에 의한 보안검사 시작
@@ -148,7 +143,7 @@ public class SecurityConfig {
      * */
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
-        return new TokenAuthenticationFilter(tokenProvider, redisUtil, appProperties);
+        return new TokenAuthenticationFilter(tokenProvider, redisUtil, tokenProperties);
     }
 
     /*
@@ -167,8 +162,7 @@ public class SecurityConfig {
     public OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler() {
         return new OAuth2AuthenticationSuccessHandler(
                 tokenProvider,
-                appProperties,
-                userRefreshTokenRepository,
+                tokenProperties,
                 oAuth2AuthorizationRequestBasedOnCookieRepository(),
                 redisUtil
         );
