@@ -42,6 +42,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
 
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
+        log.info("OAuth User정보 로드");
         OAuth2User user = super.loadUser(userRequest);
         try {
             return this.process(userRequest, user);
@@ -54,13 +55,20 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
     }
 
     private OAuth2User process(OAuth2UserRequest userRequest, OAuth2User user) {
+        log.info("OAtuh 정보 process");
         ProviderType providerType = ProviderType.valueOf(userRequest.getClientRegistration().getRegistrationId().toUpperCase());
 
         OAuth2UserInfo userInfo = OAuth2UserInfoFactory.getOAuth2UserInfo(providerType, user.getAttributes());
+        log.info("userInfo : {} ", userInfo);
 //        User savedUser = userRepository.findByUserId(userInfo.getId());
-        // 수정부분
+
+        // 회원 정보 없으면 가입을 해야함.
         Optional<User> result = userRepository.findByUserId(userInfo.getId());
-        User savedUser = result.orElseThrow(()->new RestApiException(UserErrorCode.USER_402));
+        User savedUser = result.orElse(null);
+
+        if(savedUser == null) {
+            log.info("회원 정보가 없습니다.");
+        }
 
         if (savedUser != null) {
             if (providerType != savedUser.getProviderType()) {
@@ -82,7 +90,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         User user = User.builder()
                 .userId(userInfo.getId())
                 .userPassword("NO_PASS")
-                .userName(userInfo.getName())
+                .userName(userInfo.getName()) //name 은 닉네임
                 .userEmail(userInfo.getEmail() != null ? userInfo.getEmail() : "NO_EMAIL")
                 .userPhone("NO_PHONE")
                 .userGender("N")

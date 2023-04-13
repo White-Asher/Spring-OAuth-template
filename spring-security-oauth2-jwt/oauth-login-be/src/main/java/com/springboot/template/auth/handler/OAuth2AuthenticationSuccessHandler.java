@@ -1,5 +1,6 @@
 package com.springboot.template.auth.handler;
 
+import com.springboot.template.common.response.RestApiResponse;
 import com.springboot.template.config.properties.TokenProperties;
 import com.springboot.template.auth.entity.ProviderType;
 import com.springboot.template.auth.entity.RoleType;
@@ -133,7 +134,10 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", accessToken.getToken())
                 .build().toUriString();
-
+//        response.setContentType("application/json;charset=UTF-8");
+//        response.setHeader(tokenProperties.getAuth().getAccessTokenHeaderName(),
+//                tokenProperties.getAuth().getAccessTokenHeaderPrefix() + accessToken.getToken());
+//        return new RestApiResponse<>("로그인 완료");
     }
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
