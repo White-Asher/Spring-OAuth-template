@@ -53,11 +53,10 @@ public class UserService {
     
     // 회원 삭제
     @Transactional
-    public boolean deleteUser(String userId) {
+    public void deleteUser(String userId) {
         User user = userRepository.findByUserId(userId).orElseThrow(()-> new RestApiException(UserErrorCode.USER_402));
         try {
             user.setUserActive(false);
-            return true;
         } catch (RuntimeException e) {
             throw new RestApiException(UserErrorCode.USER_501);
         }

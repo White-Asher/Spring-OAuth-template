@@ -1,11 +1,11 @@
 package com.springboot.template.user.controller;
 
-import com.springboot.template.auth.service.CustomOAuth2UserService;
 import com.springboot.template.auth.service.CustomUserDetailsService;
 import com.springboot.template.common.error.errorcode.UserErrorCode;
 import com.springboot.template.common.error.exception.RestApiException;
 import com.springboot.template.common.error.response.ErrorResponse;
 import com.springboot.template.common.response.RestApiResponse;
+import com.springboot.template.config.OpenApiConfig;
 import com.springboot.template.user.dto.UserModifyDto;
 import com.springboot.template.user.dto.UserResponseDto;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,20 +31,8 @@ import javax.validation.Valid;
 @Tag(name = "user", description = "회원 관련 컨트롤러")
 public class UserController {
     private final UserService userService;
-    private final PasswordEncoder passwordEncoder;
-    private final CustomOAuth2UserService customOAuth2UserService;
     private final CustomUserDetailsService customUserDetailsService;
-
-    // 중요한 코드 삭제하지 말것
-//    @GetMapping
-//    @Operation(summary = "회원 정보 반환", description = "회원 정보를 반환한다.", tags = {"user"})
-//    public ApiResponseDto<?> getUser() {
-//        org.springframework.security.core.userdetails.User principal = (org.springframework.security.core.userdetails.User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-//        log.info("getUser principal : {}", principal);
-//        User user = userService.getUser(principal.getUsername());
-//        log.info("getUser user : {}", user);
-//        return ApiResponseDto.success("user", user);
-//    }
+    private final PasswordEncoder passwordEncoder;
 
     @GetMapping
     @Operation(summary = "회원 정보 반환", description = "회원 정보 반환 API", tags = {"user"})
@@ -52,11 +40,11 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "OK", content = {
                     @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponseDto.class)),
                     @Content(mediaType = "*/*", schema = @Schema(implementation = RestApiResponse.class)) }),
-            @ApiResponse(responseCode = "USER_402", description = "\"DB 회원 정보 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "USER_402", description = "DB 회원 정보 없음", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = OpenApiConfig.securitySchemeName)
     public RestApiResponse<?> getUserInfo() {
         log.info("/api/user | GET method | 회원 정보 반환 요청됨");
 
@@ -107,9 +95,8 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    @SecurityRequirement(name = "bearerAuth")
-    public RestApiResponse<?> modifyUserInfo(
-            @Valid @RequestBody UserModifyDto userModifyDto) {
+    @SecurityRequirement(name = OpenApiConfig.securitySchemeName)
+    public RestApiResponse<?> modifyUserInfo(@Valid @RequestBody UserModifyDto userModifyDto) {
         log.info("/api/user | PATCH method | 회원 정보 수정 요청됨");
         log.info("userModifyRequestDto : {}", userModifyDto);
 
@@ -131,7 +118,7 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = @Content(schema = @Schema(implementation = ErrorResponse.class))),
     })
-    @SecurityRequirement(name = "bearerAuth")
+    @SecurityRequirement(name = OpenApiConfig.securitySchemeName)
     public RestApiResponse<?> modifyUserInfo() {
         log.info("/api/user | PATCH method | 회원 정보 삭제 요청됨");
 

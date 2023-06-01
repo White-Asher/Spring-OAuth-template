@@ -1,6 +1,7 @@
 package com.springboot.template.auth.handler;
 
-import com.springboot.template.config.properties.AppProperties;
+import com.springboot.template.common.response.RestApiResponse;
+import com.springboot.template.config.properties.TokenProperties;
 import com.springboot.template.auth.entity.ProviderType;
 import com.springboot.template.auth.entity.RoleType;
 import com.springboot.template.auth.repository.OAuth2AuthorizationRequestBasedOnCookieRepository;
@@ -8,7 +9,6 @@ import com.springboot.template.auth.info.OAuth2UserInfo;
 import com.springboot.template.auth.info.OAuth2UserInfoFactory;
 import com.springboot.template.auth.token.AuthToken;
 import com.springboot.template.auth.token.AuthTokenProvider;
-import com.springboot.template.user.repository.UserRefreshTokenRepository;
 
 import com.springboot.template.utils.CookieUtil;
 import com.springboot.template.utils.RedisUtil;
@@ -53,8 +53,7 @@ import static org.springframework.security.oauth2.core.endpoint.OAuth2ParameterN
 public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationSuccessHandler {
 
     private final AuthTokenProvider tokenProvider;
-    private final AppProperties appProperties;
-    private final UserRefreshTokenRepository userRefreshTokenRepository;
+    private final TokenProperties tokenProperties;
     private final OAuth2AuthorizationRequestBasedOnCookieRepository authorizationRequestRepository;
     private final RedisUtil redisUtil;
 
@@ -90,19 +89,19 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
         RoleType roleType = hasAuthority(authorities, RoleType.ADMIN.getCode()) ? RoleType.ADMIN : RoleType.USER;
 
-        // refresh token 생성
+        // access token 생성
         Date now = new Date();
         AuthToken accessToken = tokenProvider.createAuthToken(
                 userInfo.getId(),
                 roleType.getCode(),
-                new Date(now.getTime() + appProperties.getAuth().getTokenExpiry())
+                new Date(now.getTime() + tokenProperties.getAuth().getAccessTokenExpiry())
         );
 
         // refresh 토큰 기간 설정
-        long refreshTokenExpiry = appProperties.getAuth().getRefreshTokenExpiry();
+        long refreshTokenExpiry = tokenProperties.getAuth().getRefreshTokenExpiry();
 
         AuthToken refreshToken = tokenProvider.createAuthToken(
-                appProperties.getAuth().getTokenSecret(),
+                tokenProperties.getAuth().getTokenSecret(),
                 new Date(now.getTime() + refreshTokenExpiry)
         );
 
@@ -112,13 +111,13 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // 리프래쉬 토큰이 있으면 삭제합니다.
         if (userRefreshToken != null) {
             log.info("refresh token exists so delete and save new token");
-            userRefreshTokenRepository.deleteById((String) userInfo.getId());
+            redisUtil.delData(userInfo.getId());
         }
 
         // 새로 발급하기
 //        userRefreshToken = refreshToken.getToken();
         // 발급한 새 토큰을 redis에 저장함.
-        redisUtil.setDataExpire((String) userInfo.getId(), refreshToken.getToken(), refreshTokenExpiry);
+        redisUtil.setDataExpire(userInfo.getId(), refreshToken.getToken(), refreshTokenExpiry);
 //        userRefreshToken = new UserRefreshToken(userInfo.getId(), refreshToken.getToken());
 //        userRefreshTokenRepository.saveAndFlush(userRefreshToken);
 
@@ -131,11 +130,14 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         // token 생성값 확인
         log.info("Oauth return access token : {}", accessToken.getToken());
         log.info("Oauth redis save refresh token : {}", refreshToken.getToken());
-//        return UriComponentsBuilder.fromHttpRequest("Authrorization", )
 
         return UriComponentsBuilder.fromUriString(targetUrl)
                 .queryParam("token", accessToken.getToken())
                 .build().toUriString();
+//        response.setContentType("application/json;charset=UTF-8");
+//        response.setHeader(tokenProperties.getAuth().getAccessTokenHeaderName(),
+//                tokenProperties.getAuth().getAccessTokenHeaderPrefix() + accessToken.getToken());
+//        return new RestApiResponse<>("로그인 완료");
     }
 
     protected void clearAuthenticationAttributes(HttpServletRequest request, HttpServletResponse response) {
@@ -159,7 +161,7 @@ public class OAuth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     private boolean isAuthorizedRedirectUri(String uri) {
         URI clientRedirectUri = URI.create(uri);
 
-        return appProperties.getOauth2().getAuthorizedRedirectUris()
+        return tokenProperties.getOauth2().getAuthorizedRedirectUris()
                 .stream()
                 .anyMatch(authorizedRedirectUri -> {
                     // Only validate host and port. Let the clients use different paths if they want to

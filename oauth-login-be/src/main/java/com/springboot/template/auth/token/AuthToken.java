@@ -33,7 +33,6 @@ import java.util.Date;
 @ToString
 @RequiredArgsConstructor
 public class AuthToken {
-
     @Getter
     private final String token;
     private final Key key;
@@ -107,20 +106,26 @@ public class AuthToken {
         }
     }
 
-
-
-    public Claims getExpiredTokenClaims() {
-        try {
-            Jwts.parserBuilder()
-                    .setSigningKey(key)
-                    .build()
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (ExpiredJwtException e) {
-            log.info("Expired JWT token.");
-            return e.getClaims();
-        }
-        return null;
-    }
-
+//    public Claims getExpiredTokenClaims() {
+//        try {
+//            Jwts.parserBuilder()
+//                    .setSigningKey(key)
+//                    .build()
+//                    .parseClaimsJws(token)
+//                    .getBody();
+//        } catch (ExpiredJwtException e) {
+//            log.info("Expired JWT token.");
+//            return e.getClaims();
+//        }
+//        return null;
+//    }
+//
+//    public String getId(String token) {
+//        log.info("getId method token : {}", token);
+//        return Jwts.parserBuilder()
+//                .setSigningKey(key)
+//                .build()
+//                .parseClaimsJws(token).getBody()
+//                .getSubject();
+//    }
 }
