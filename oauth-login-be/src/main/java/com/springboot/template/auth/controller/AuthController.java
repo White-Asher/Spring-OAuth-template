@@ -146,7 +146,7 @@ public class AuthController {
     }
 
 //    @GetMapping("/refresh")
-//    @Operation(summary = "Refresh token 재발급 (페기 예정)", description = "Refresh token 재발급 API", tags = {"auth"})
+//    @Operation(summary = "Refresh token 재발급", description = "Refresh token 재발급 API", tags = {"auth"})
 //    public ResponseEntity<?> refreshToken (HttpServletRequest request, HttpServletResponse response) {
 //        // access token 확인
 //        String accessToken = HeaderUtil.getAccessToken(request);
