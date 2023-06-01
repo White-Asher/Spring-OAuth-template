@@ -1,4 +1,4 @@
-package com.springboot.template.config;
+package com.springboot.template.config.properties;
 
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;

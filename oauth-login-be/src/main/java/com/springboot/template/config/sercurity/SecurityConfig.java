@@ -1,4 +1,4 @@
-package com.springboot.template.config;
+package com.springboot.template.config.sercurity;
 
 import com.springboot.template.config.properties.TokenProperties;
 import com.springboot.template.config.properties.CorsProperties;

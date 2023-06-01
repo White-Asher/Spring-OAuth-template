@@ -1,4 +1,4 @@
-package com.springboot.template.config;
+package com.springboot.template.config.properties;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

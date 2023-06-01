@@ -5,7 +5,7 @@ import com.springboot.template.common.error.errorcode.UserErrorCode;
 import com.springboot.template.common.error.exception.RestApiException;
 import com.springboot.template.common.error.response.ErrorResponse;
 import com.springboot.template.common.response.RestApiResponse;
-import com.springboot.template.config.OpenApiConfig;
+import com.springboot.template.config.properties.OpenApiConfig;
 import com.springboot.template.user.dto.UserModifyDto;
 import com.springboot.template.user.dto.UserResponseDto;
 import io.swagger.v3.oas.annotations.media.Content;
