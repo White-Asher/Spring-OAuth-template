@@ -72,7 +72,7 @@ public class AuthController {
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            authReqModel.getId(), 
+                            authReqModel.getId(),
                             authReqModel.getPassword()
                     )
             );
@@ -80,7 +80,7 @@ public class AuthController {
             log.info("/api/auth/login | Post Method | 로그인 검증 실패");
             throw new RestApiException(UserErrorCode.USER_400);
         }
-        
+
         log.info("authentication : {} ", authentication);
 
         // 로그인 정보를 SecurityContextHolder에 적재함.
@@ -115,12 +115,12 @@ public class AuthController {
 
         // redis 에 refresh 토큰 새로 넣기
         redisUtil.setDataExpire(userId, refreshToken.getToken(), refreshTokenExpiry);
-        
+
         // 쿠키 만료시간 설정
         int cookieMaxAge = (int) refreshTokenExpiry;
         CookieUtil.deleteCookie(request, response, tokenProperties.getAuth().getRefreshTokenName());
         CookieUtil.addCookie(response, tokenProperties.getAuth().getRefreshTokenName(), refreshToken.getToken(), cookieMaxAge);
-        
+
         // Header Authorization 에 AccessToken 적재
         response.setContentType("application/json;charset=UTF-8");
         response.setHeader(tokenProperties.getAuth().getAccessTokenHeaderName(),

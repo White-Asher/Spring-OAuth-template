@@ -53,6 +53,9 @@ public class TokenAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         log.info("TokenAuthenticationFilter 호출됨");
+        log.info("1 : {}", request.getServletPath());
+        log.info("2 : {}", request.getRequestURI());
+        log.info("3 : {}", request.getRequestURL().toString());
 
         String refreshToken = null;
 

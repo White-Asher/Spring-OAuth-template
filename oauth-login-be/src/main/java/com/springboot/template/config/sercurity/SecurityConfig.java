@@ -18,26 +18,21 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
 import java.util.Arrays;
 
-@Configuration
-@EnableWebSecurity
-@EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
-@RequiredArgsConstructor
 @Slf4j
+@Configuration
+@EnableWebSecurity(debug = true)
+@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final CorsProperties corsProperties;
@@ -62,6 +57,10 @@ public class SecurityConfig {
                 .csrf().disable()
                 .formLogin().disable()
                 .httpBasic().disable()
+                .authorizeRequests()
+                .antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/proxy/**", "/api/auth/login", "**/swagger-ui/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
                 // 지정된 필터 앞에 커스텀 필터를 추가 (UsernamePasswordAuthenticationFilter 보다 먼저 실행된다)
                 .addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling()
@@ -69,14 +68,15 @@ public class SecurityConfig {
                 .authenticationEntryPoint(new RestAuthenticationEntryPoint())
                 // 접근 권한이 거부되면 실행되는 핸들러
                 .accessDeniedHandler(tokenAccessDeniedHandler)
-                .and()
+//                .and()
                 // 요청에 의한 보안검사 시작
-                .authorizeRequests()
-//                .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
-//                .antMatchers("/api/**").hasAnyAuthority(RoleType.USER.getCode())
-                .antMatchers("/**").permitAll()
+//                .authorizeRequests()
+////                .requestMatchers(CorsUtils::isPreFlightRequest).permitAll()
+////                .antMatchers("/api/**").hasAnyAuthority(RoleType.USER.getCode())
+//                .antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/proxy/**", "/api/auth/login", "**/swagger-ui/**").permitAll()
+////                .antMatchers("/**").permitAll()
+//                .anyRequest().authenticated()
 //                .antMatchers("/api/**/admin/**").hasAnyAuthority(RoleType.ADMIN.getCode())
-                .anyRequest().authenticated()
                 .and()
                 .oauth2Login()
                 .authorizationEndpoint()
@@ -97,7 +97,6 @@ public class SecurityConfig {
                 .logoutSuccessHandler(logoutSuccessHandler)
                 .logoutSuccessUrl("/");
 
-
         return http.build();
     }
 
@@ -106,7 +105,7 @@ public class SecurityConfig {
 //        return web -> {
 //            web.ignoring()
 //                    .antMatchers(
-//                            "/swagger-ui/index.html"
+//                            "/v3/api-docs/**", "/swagger-ui/**", "/swagger-resources/**", "/swagger-ui/index.html"
 //                            );
 //        };
 //    }
